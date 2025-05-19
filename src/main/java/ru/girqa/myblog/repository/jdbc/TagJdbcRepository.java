@@ -4,7 +4,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 import ru.girqa.myblog.model.domain.Tag;
 import ru.girqa.myblog.repository.TagRepository;
 
@@ -21,7 +20,6 @@ public class TagJdbcRepository implements TagRepository {
     private final JdbcTemplate jdbcTemplate;
 
     @Override
-    @Transactional(readOnly = true)
     public List<Tag> findByPostId(@NonNull Long postId) {
         return jdbcTemplate.query(
                 """
@@ -35,7 +33,6 @@ public class TagJdbcRepository implements TagRepository {
     }
 
     @Override
-    @Transactional
     public void bindTagsToPost(@NonNull Long postId, @NonNull List<Tag> tags) {
 
         jdbcTemplate.batchUpdate(
@@ -53,7 +50,6 @@ public class TagJdbcRepository implements TagRepository {
     }
 
     @Override
-    @Transactional
     public List<Tag> merge(@NonNull List<Tag> tags) {
         if (tags.isEmpty()) return new ArrayList<>();
 
