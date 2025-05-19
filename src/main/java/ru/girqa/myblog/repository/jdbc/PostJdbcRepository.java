@@ -5,16 +5,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-import ru.girqa.myblog.model.domain.Commentary;
 import ru.girqa.myblog.model.domain.PageRequest;
-import ru.girqa.myblog.model.domain.Tag;
 import ru.girqa.myblog.model.domain.post.Post;
 import ru.girqa.myblog.model.domain.post.PostPreview;
 import ru.girqa.myblog.model.domain.post.PostsPage;
-import ru.girqa.myblog.repository.CommentaryRepository;
 import ru.girqa.myblog.repository.PostRepository;
-import ru.girqa.myblog.repository.TagRepository;
 
 import javax.sql.rowset.serial.SerialBlob;
 import java.io.IOException;
@@ -31,12 +26,7 @@ public class PostJdbcRepository implements PostRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
-    private final CommentaryRepository commentaryRepository;
-
-    private final TagRepository tagRepository;
-
     @Override
-    @Transactional
     public Post save(@NonNull Post post) {
         byte[] image;
         try {
@@ -58,17 +48,12 @@ public class PostJdbcRepository implements PostRepository {
             throw new IllegalStateException("Bad returned post id on creation");
         }
 
-        List<Tag> tags = tagRepository.merge(post.getTags());
-        tagRepository.bindTagsToPost(postId, tags);
-
         return post.toBuilder()
                 .id(postId)
-                .tags(tags)
                 .build();
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<Post> findById(@NonNull Long id) {
         Optional<Post> opPost = jdbcTemplate.query(
                         """
@@ -83,13 +68,10 @@ public class PostJdbcRepository implements PostRepository {
         if (opPost.isEmpty()) return opPost;
 
         Post post = opPost.get();
-        post = fillPostDependencies(post);
-
         return Optional.of(post);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public PostsPage findAllPaged(@NonNull PageRequest page) {
         Optional<Integer> totalPages;
         List<PostPreview> posts;
@@ -136,11 +118,6 @@ public class PostJdbcRepository implements PostRepository {
                     .stream().findFirst();
         }
 
-        for (PostPreview post : posts) {
-            post.setTags(tagRepository.findByPostId(post.getId()));
-            post.setComments(commentaryRepository.countByPostId(post.getId()));
-        }
-
         return PostsPage.builder()
                 .page(page.getPage())
                 .postsPerPage(page.getPosts())
@@ -158,17 +135,6 @@ public class PostJdbcRepository implements PostRepository {
                 .text(rs.getString("post_text"))
                 .likes(rs.getInt("likes"))
                 .build();
-    }
-
-    protected Post fillPostDependencies(Post post) {
-        List<Tag> tags = tagRepository.findByPostId(post.getId());
-        List<Commentary> commentaries = commentaryRepository.findByPostId(post.getId());
-
-        post = post.toBuilder()
-                .tags(tags)
-                .commentaries(commentaries)
-                .build();
-        return post;
     }
 
     protected PostPreview extractPreview(ResultSet rs) throws SQLException {

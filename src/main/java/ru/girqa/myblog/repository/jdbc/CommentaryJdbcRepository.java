@@ -4,7 +4,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 import ru.girqa.myblog.model.domain.Commentary;
 import ru.girqa.myblog.repository.CommentaryRepository;
 
@@ -20,7 +19,6 @@ public class CommentaryJdbcRepository implements CommentaryRepository {
     private final JdbcTemplate jdbcTemplate;
 
     @Override
-    @Transactional
     public Commentary save(@NonNull Commentary commentary) {
         Long id = jdbcTemplate.queryForObject("""
                         insert into commentaries(post_id, commentary_text)
@@ -36,7 +34,6 @@ public class CommentaryJdbcRepository implements CommentaryRepository {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<Commentary> findById(@NonNull Long id) {
         return jdbcTemplate.query("""
                 select id, post_id, commentary_text from commentaries
@@ -48,7 +45,6 @@ public class CommentaryJdbcRepository implements CommentaryRepository {
     }
 
     @Override
-    @Transactional
     public void update(@NonNull Commentary commentary) {
         jdbcTemplate.update("""
                             update commentaries
@@ -59,7 +55,6 @@ public class CommentaryJdbcRepository implements CommentaryRepository {
     }
 
     @Override
-    @Transactional
     public void delete(@NonNull Long id) {
         jdbcTemplate.update("""
                                     delete from commentaries
@@ -68,7 +63,6 @@ public class CommentaryJdbcRepository implements CommentaryRepository {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<Commentary> findByPostId(@NonNull Long postId) {
         return jdbcTemplate.query("""
                         select id, post_id, commentary_text from commentaries
@@ -80,7 +74,6 @@ public class CommentaryJdbcRepository implements CommentaryRepository {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Long countByPostId(@NonNull Long postId) {
         return jdbcTemplate.queryForObject("""
                         select count(*) from commentaries
