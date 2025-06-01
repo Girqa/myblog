@@ -34,7 +34,6 @@ public class TagJdbcRepository implements TagRepository {
 
     @Override
     public void bindTagsToPost(@NonNull Long postId, @NonNull List<Tag> tags) {
-
         jdbcTemplate.batchUpdate(
                 """
                         insert into post_tags (post_id, tag_id)
@@ -46,6 +45,16 @@ public class TagJdbcRepository implements TagRepository {
                     ps.setLong(1, postId);
                     ps.setLong(2, tag.getId());
                 }
+        );
+    }
+
+    @Override
+    public void unboundTagsFromPost(@NonNull Long postId) {
+        jdbcTemplate.update("""
+                        delete from post_tags
+                        where post_id = ?
+                        """,
+                postId
         );
     }
 

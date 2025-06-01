@@ -11,5 +11,7 @@ public interface TagRepository {
 
     void bindTagsToPost(@NonNull Long postId, @NonNull List<Tag> tags);
 
+    void unboundTagsFromPost(@NonNull Long postId);
+
     List<Tag> merge(@NonNull List<Tag> tags);
 }

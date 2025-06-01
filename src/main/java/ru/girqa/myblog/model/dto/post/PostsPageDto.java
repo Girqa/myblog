@@ -1,4 +1,4 @@
-package ru.girqa.myblog.model.dto;
+package ru.girqa.myblog.model.dto.post;
 
 import jakarta.validation.constraints.NotNull;
 

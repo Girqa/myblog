@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${post.getTitle()}"></title>
+    <link th:href="@{/webjars/bootstrap/5.3.0/dist/css/bootstrap.min.css}" rel="stylesheet">
+    <style>
+        .btn-outline-secondary {
+            border-color: #6c757d;
+            color: #6c757d;
+            transition: all 0.2s;
+        }
+
+        .btn-outline-secondary:hover {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .post-page {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 15px;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .post-likes::before {
+            content: "❤️";
+        }
+
+        .post-delete-btn::before {
+            content: "🗑";
+        }
+
+        .tags-block {
+            margin: 1.5rem 0;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            background: #e9ecef;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+        }
+
+        .comments-section {
+            margin-top: 3rem;
+        }
+
+        .comment {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .comment-actions {
+            margin-top: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <a th:href="@{/posts}" class="btn btn-outline-secondary mb-3">
+        ← Назад к всем постам
+    </a>
+</div>
+
+<div class="post-page container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 th:text="${post.getTitle()}"></h1>
+        <div class="post-actions">
+            <button type="button"
+                    class="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#postModal"
+            >Редактировать
+            </button>
+            <form th:action="@{/posts/post/{id}(id=${post.id})}" method="post">
+                <input type="hidden" name="_method" value="delete">
+                <button type="submit" class="btn btn-danger">Удалить</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="post-content">
+        <div class="post-image mb-4">
+            <img th:src="@{/posts/post/{id}/image(id=${post.id})}" class="img-fluid rounded" alt="Изображение поста">
+        </div>
+
+        <div class="post-text mb-4">
+            <p th:each="paragraph : ${#strings.arraySplit(post.getText(), T(org.apache.commons.lang3.StringUtils).LF)}"
+               th:text="${paragraph}"
+               style="white-space: pre-wrap;"
+            ></p>
+        </div>
+
+        <div class="tags-block">
+            <span th:each="tag : ${post.getTags()}"
+                  class="tag"
+                  th:text="${tag}"></span>
+        </div>
+    </div>
+
+    <div class="likes-block mb-4">
+        <button class="btn btn-outline-danger" onclick="likePost()">
+            <span class="post-likes" th:text="${post.getLikes()}"></span>
+        </button>
+    </div>
+
+    <div class="comments-section">
+        <h3>Комментарии</h3>
+        <form th:action="@{/commentaries/commentary}" th:object="${createCommentary}" method="post">
+            <div class="mb-3">
+                <input type="hidden" th:value="${post.getId()}" name="postId">
+                <textarea class="form-control"
+                          name="text" rows="3" required
+                          th:field="*{text}"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Добавить комментарий</button>
+        </form>
+
+        <div class="comments-list mt-4">
+            <div th:each="comment : ${post.getCommentaries()}" class="comment"
+                 th:id="'comment-' + ${comment.id()}"
+            >
+                <div class="comment-content mb-5" th:data-id="${comment.id()}"
+                     onclick="showEditArea(this.getAttribute('data-id'))"
+                >
+                    <p th:each="paragraph : ${#strings.arraySplit(comment.text(), T(org.apache.commons.lang3.StringUtils).LF)}"
+                       th:if="${!#strings.isEmpty(paragraph)}"
+                       th:text="${paragraph}"
+                       style="white-space: pre-wrap;"
+                    ></p>
+                </div>
+                <div class="comment-edit mb-5" style="display: none">
+                    <form th:action="@{/commentaries/commentary/{id}(id=${comment.id()})}" method="post"
+                          class="comment-edit-form">
+                        <input type="hidden" name="_method" value="put">
+                        <input type="hidden" th:value="${post.getId()}" name="postId">
+                        <input type="hidden" th:value="${comment.id()}" name="commentaryId">
+                        <textarea class="form-control text-area"
+                                  name="text" rows="3" required
+                                  th:text="${comment.text()}"></textarea>
+                    </form>
+                    <button class="btn btn-primary" th:data-id="${comment.id()}"
+                            onclick="hideEditArea(this.getAttribute('data-id'))">
+                        Отменить редактирование
+                    </button>
+                </div>
+                <div class="comment-actions">
+                    <form th:action="@{/commentaries/commentary/{id}(id=${comment.id})}" method="post">
+                        <input type="hidden" name="_method" value="delete">
+                        <input type="hidden" th:value="${post.getId()}" name="postId">
+                        <input type="hidden" th:value="${comment.id()}" name="commentaryId">
+                        <button type="submit" class="post-delete-btn btn btn-sm btn-outline-danger"></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.querySelectorAll('.comment-edit-form')
+                .forEach(form => {
+                    form.querySelector('.text-area')
+                        .addEventListener('keypress', function (e) {
+                            if ((e.ctrlKey || e.metaKey) && e.code === 'Enter') {
+                                e.preventDefault();
+                                form.submit();
+                            }
+                        })
+                })
+
+            function showEditArea(commentId) {
+                const commentEl = document.getElementById('comment-' + commentId)
+                const content = commentEl.querySelector('.comment-content')
+                const formContainer = commentEl.querySelector('.comment-edit')
+                content.style.display = 'none'
+                formContainer.style.display = 'block'
+            }
+
+            function hideEditArea(commentId) {
+                const commentEl = document.getElementById('comment-' + commentId)
+                const content = commentEl.querySelector('.comment-content')
+                const formContainer = commentEl.querySelector('.comment-edit')
+                content.style.display = 'block'
+                formContainer.style.display = 'none'
+            }
+
+            function likePost() {
+                fetch(window.location.href + '/like', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-type': 'application/json'
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => document.querySelector('.likes-block span').textContent = data);
+            }
+        </script>
+    </div>
+</div>
+
+<div th:replace="fragments/post-modal :: postModal(form_title='Редактирование поста', uri=@{/posts/post/{id}(id=${post.getId()})}, postModel=${editPost})"></div>
+<script th:src="@{/webjars/bootstrap/5.3.0/dist/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

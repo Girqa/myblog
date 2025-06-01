@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+</head>
+<body>
+
+<div th:fragment="postModal(form_title, uri, postModel)">
+    <div class="modal fade"
+         id="postModal"
+         tabindex="-1"
+         aria-labelledby="postModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form action="#" th:action="${uri}" method="post"
+                      enctype="multipart/form-data">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="postModalLabel">
+                            <span th:text="${form_title}"></span>
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Заголовок</label>
+                            <input type="text" class="form-control" id="title"
+                                   name="title" th:value="${postModel.title}" required
+                                   placeholder="Введите заголовок поста"
+                            >
+                            <div class="invalid-feedback">
+                                Введите заголовок
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Изображение</label>
+                            <input type="file" class="form-control" id="image"
+                                   accept="image/*"
+                                   name="image" th:value="${postModel.image}"
+                                   required>
+                            <small class="form-text text-muted">
+                                Максимальный размер файла: 5MB
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="content" class="form-label">Содержание</label>
+                            <textarea class="form-control" id="content"
+                                      rows="8" required type="text"
+                                      name="text" th:value="${postModel.text}" th:text="${postModel.text}"
+                                      placeholder="Напишите содержание поста"
+                            ></textarea>
+                            <div class="invalid-feedback">
+                                Пожалуйста, введите содержание поста
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="tagInput" class="form-label">Теги</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="tagInput"
+                                   placeholder="Введите тег и нажмите Enter">
+                            <div id="tagsDisplay" class="mt-2 d-flex flex-wrap gap-2"></div>
+                            <input type="hidden" th:value="${postModel.tags}" id="hiddenTags" name="tags">
+                            <div class="invalid-feedback">
+                                Пожалуйста, добавьте хотя бы один тег
+                            </div>
+                            <small class="form-text text-muted">
+                                Нажмите Enter после ввода тега для его добавления
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                        <button type="submit" class="btn btn-primary">
+                            <span>Создать пост</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            document.getElementById('tagInput').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const tag = this.value.trim();
+                    if (tag) {
+                        addTag(tag);
+                        this.value = '';
+                    }
+                }
+            });
+
+            function addTag(tagText) {
+                const tags = Array.from(document.querySelectorAll('.tag-badge'))
+                    .map(tag => tag.querySelector('.tag-text').textContent.trim());
+
+                if (tags.includes(tagText)) return;
+
+                const tagElement = document.createElement('div');
+                tagElement.className = 'tag-badge';
+
+                const textSpan = document.createElement('span');
+                textSpan.className = 'tag-text';
+                textSpan.textContent = tagText;
+
+                const removeSpan = document.createElement('span');
+                removeSpan.className = 'tag-remove';
+                removeSpan.innerHTML = ' ×';
+                removeSpan.onclick = function () {
+                    tagElement.remove();
+                    updateHiddenTags();
+                };
+
+                tagElement.appendChild(textSpan);
+                tagElement.appendChild(removeSpan);
+                document.getElementById('tagsDisplay').appendChild(tagElement);
+
+                updateHiddenTags();
+            }
+
+            function updateHiddenTags() {
+                const tags = Array.from(document.querySelectorAll('.tag-text'))
+                    .map(tag => tag.textContent.trim());
+                document.getElementById('hiddenTags').value = tags.join(',');
+            }
+        </script>
+    </div>
+</div>
+
+</body>
+</html>

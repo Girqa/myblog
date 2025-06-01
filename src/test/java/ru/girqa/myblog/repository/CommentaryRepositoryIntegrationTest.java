@@ -36,8 +36,8 @@ class CommentaryRepositoryIntegrationTest extends PostgresBaseIntegrationTest {
     static final String SET_COMMENTARIES_ID_SEQ = "select setval('commentaries_id_seq', 12, false);";
 
     static final String CREATE_POST = """
-            insert into posts(title, image, post_text, likes)
-            values ('post title', 'DEADBEEF'::bytea, 'some text', 10);
+            insert into posts(title, post_text, likes)
+            values ('post title', 'some text', 10);
             """;
 
     @Nested
@@ -77,7 +77,7 @@ class CommentaryRepositoryIntegrationTest extends PostgresBaseIntegrationTest {
 
         @Test
         void shouldFindAllCommentariesBindedToPost() {
-            List<Commentary> dbCommentaries = repository.findByPostId(POST_ID);
+            List<Commentary> dbCommentaries = repository.findByPostIdOrderById(POST_ID);
             assertThat(dbCommentaries)
                     .hasSize(COMMENTARIES.size())
                     .usingRecursiveFieldByFieldElementComparator()

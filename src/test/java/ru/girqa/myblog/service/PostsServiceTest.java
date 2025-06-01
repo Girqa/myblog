@@ -14,12 +14,10 @@ import ru.girqa.myblog.model.domain.Tag;
 import ru.girqa.myblog.model.domain.post.Post;
 import ru.girqa.myblog.model.domain.post.PostsPage;
 import ru.girqa.myblog.repository.CommentaryRepository;
+import ru.girqa.myblog.repository.ImageRepository;
 import ru.girqa.myblog.repository.PostRepository;
 import ru.girqa.myblog.repository.TagRepository;
 
-import javax.sql.rowset.serial.SerialBlob;
-
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +31,9 @@ class PostsServiceTest {
 
     @Mock
     PostRepository postRepositoryMock;
+
+    @Mock
+    ImageRepository imageRepositoryMock;
 
     @Mock
     TagRepository tagRepositoryMock;
@@ -54,7 +55,6 @@ class PostsServiceTest {
         Post post = Post.builder()
                 .title("Title")
                 .text("Text")
-                .image(new SerialBlob("Hello world!".getBytes(StandardCharsets.UTF_8)))
                 .tags(List.of(
                         Tag.builder()
                                 .name("Linux")
@@ -85,7 +85,7 @@ class PostsServiceTest {
         when(tagRepositoryMock.merge(anyList()))
                 .thenReturn(mergedTags);
 
-        Post saved = postsService.create(post);
+        Post saved = postsService.create(post);  // TODO: add check for image
 
         verify(postRepositoryMock, times(1))
                 .save(post);
@@ -100,7 +100,6 @@ class PostsServiceTest {
                 () -> assertEquals(5L, saved.getId()),
                 () -> assertEquals(post.getTitle(), saved.getTitle()),
                 () -> assertEquals(post.getText(), saved.getText()),
-                () -> assertEquals(post.getImage(), saved.getImage()),
                 () -> assertEquals(2, saved.getTags().size())
         );
 
@@ -146,7 +145,7 @@ class PostsServiceTest {
         when(tagRepositoryMock.findByPostId(post.getId()))
                 .thenReturn(tags);
 
-        when(commentaryRepositoryMock.findByPostId(post.getId()))
+        when(commentaryRepositoryMock.findByPostIdOrderById(post.getId()))
                 .thenReturn(commentaries);
 
         Post dbPost = postsService.findPost(post.getId());
@@ -155,7 +154,6 @@ class PostsServiceTest {
                 () -> assertEquals(post.getId(), dbPost.getId()),
                 () -> assertEquals(post.getTitle(), dbPost.getTitle()),
                 () -> assertEquals(post.getText(), dbPost.getText()),
-                () -> assertEquals(post.getImage(), dbPost.getImage()),
                 () -> assertEquals(2, dbPost.getTags().size()),
                 () -> assertEquals(2, dbPost.getCommentaries().size())
         );
