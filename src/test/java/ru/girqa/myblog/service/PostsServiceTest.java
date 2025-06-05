@@ -11,6 +11,7 @@ import ru.girqa.myblog.exception.PostNotFoundException;
 import ru.girqa.myblog.model.domain.Commentary;
 import ru.girqa.myblog.model.domain.PageRequest;
 import ru.girqa.myblog.model.domain.Tag;
+import ru.girqa.myblog.model.domain.post.Image;
 import ru.girqa.myblog.model.domain.post.Post;
 import ru.girqa.myblog.model.domain.post.PostsPage;
 import ru.girqa.myblog.repository.CommentaryRepository;
@@ -52,8 +53,15 @@ class PostsServiceTest {
     @Test
     @SneakyThrows
     void shouldCreatePost() {
+        final Long POST_ID = 5L;
+        final Image image = Image.builder()
+                .size(10)
+                .data(new byte[10])
+                .build();
+
         Post post = Post.builder()
                 .title("Title")
+                .image(image)
                 .text("Text")
                 .tags(List.of(
                         Tag.builder()
@@ -67,7 +75,7 @@ class PostsServiceTest {
 
         when(postRepositoryMock.save(any()))
                 .thenReturn(post.toBuilder()
-                        .id(5L)
+                        .id(POST_ID)
                         .build()
                 );
 
@@ -90,6 +98,12 @@ class PostsServiceTest {
         verify(postRepositoryMock, times(1))
                 .save(post);
 
+        verify(imageRepositoryMock, times(1))
+                .save(image.toBuilder()
+                        .postId(POST_ID)
+                        .build()
+                );
+
         verify(tagRepositoryMock, times(1))
                 .merge(post.getTags());
 
@@ -97,7 +111,7 @@ class PostsServiceTest {
                 .bindTagsToPost(saved.getId(), mergedTags);
 
         assertAll(
-                () -> assertEquals(5L, saved.getId()),
+                () -> assertEquals(POST_ID, saved.getId()),
                 () -> assertEquals(post.getTitle(), saved.getTitle()),
                 () -> assertEquals(post.getText(), saved.getText()),
                 () -> assertEquals(2, saved.getTags().size())

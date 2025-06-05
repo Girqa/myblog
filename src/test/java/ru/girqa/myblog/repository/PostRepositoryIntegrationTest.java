@@ -5,8 +5,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
@@ -17,22 +17,17 @@ import ru.girqa.myblog.model.domain.post.PostsPage;
 import ru.girqa.myblog.repository.common.PostgresBaseIntegrationTest;
 import ru.girqa.myblog.repository.jdbc.PostJdbcRepository;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
-@ContextConfiguration(classes = {PostJdbcRepository.class, PostRepositoryIntegrationTest.MockDependenciesConfiguration.class})
+@ContextConfiguration(classes = {PostJdbcRepository.class})
 public class PostRepositoryIntegrationTest extends PostgresBaseIntegrationTest {
 
     @Autowired
     PostRepository postRepository;
-
-    static TagRepository tagRepositoryMock = mock(TagRepository.class);
-
-    static CommentaryRepository commentaryRepositoryMock = mock(CommentaryRepository.class);
 
     @Autowired
     JdbcTemplate jdbcTemplate;
@@ -42,11 +37,6 @@ public class PostRepositoryIntegrationTest extends PostgresBaseIntegrationTest {
     static final String CLEAR = "truncate table posts, tags cascade;";
 
     static final String SET_POSTS_ID_SEQ = "select setval('posts_id_seq', 4, false);";
-
-    @BeforeEach
-    void setUpMocks() {
-        reset(tagRepositoryMock, commentaryRepositoryMock);
-    }
 
     @Nested
     @Sql(statements = {CLEAR, SET_POSTS_ID_SEQ}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
@@ -61,9 +51,6 @@ public class PostRepositoryIntegrationTest extends PostgresBaseIntegrationTest {
                     .text("Text")
                     .build();
 
-            when(tagRepositoryMock.merge(anyList()))
-                    .thenReturn(new ArrayList<>());
-
             Post saved = postRepository.save(post);
             assertEquals(FIRST_POST_ID, saved.getId());
             assertEquals(post.getTitle(), saved.getTitle());
@@ -71,6 +58,115 @@ public class PostRepositoryIntegrationTest extends PostgresBaseIntegrationTest {
             assertEquals(post.getLikes(), saved.getLikes());
             assertEquals(post.getText(), saved.getText());
         }
+
+        @Test
+        @SneakyThrows
+        void shouldNotSaveNotFullPost() {
+            Post post = Post.builder()
+                    .title("Hello")
+                    .build();
+            assertThrows(
+                    DataIntegrityViolationException.class,
+                    () -> postRepository.save(post)
+            );
+        }
+    }
+
+    @Nested
+    @Sql(statements = {CLEAR, SET_POSTS_ID_SEQ}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    class PostUpdateTests {
+
+        @Test
+        void shouldUpdatePresentPost() {
+            jdbcTemplate.update("""
+                    insert into posts(title, post_text, likes)
+                    values ('post1', 't1', 5)
+                    """);
+
+            Post updated = Post.builder()
+                    .id(FIRST_POST_ID)
+                    .title("New title")
+                    .text("NewText")
+                    .build();
+
+            assertDoesNotThrow(() -> postRepository.update(updated));
+
+            Optional<Post> dbPost = postRepository.findById(updated.getId());
+            assertTrue(dbPost.isPresent());
+            assertThat(dbPost.get())
+                    .usingRecursiveComparison()
+                    .isEqualTo(updated.toBuilder()
+                            .likes(5) //this field should not update
+                            .build()
+                    );
+        }
+
+        @Test
+        void shouldNotUpdateNotPresentPost() {
+            Post updated = Post.builder()
+                    .id(FIRST_POST_ID)
+                    .title("New title")
+                    .text("NewText")
+                    .build();
+
+            assertDoesNotThrow(() -> postRepository.update(updated));
+            Optional<Post> dbPost = postRepository.findById(updated.getId());
+            assertTrue(dbPost.isEmpty());
+        }
+
+        @Test
+        void shouldIncrementLikes() {
+            jdbcTemplate.update("""
+                    insert into posts(title, post_text, likes)
+                    values ('title', 'text', 2)
+                    """);
+
+            Post expected = Post.builder()
+                    .id(FIRST_POST_ID)
+                    .title("title")
+                    .text("text")
+                    .likes(2)
+                    .build();
+
+            Integer currentLikes = assertDoesNotThrow(() -> postRepository.incrementLikes(FIRST_POST_ID));
+            assertEquals(expected.getLikes() + 1, currentLikes);
+
+            Optional<Post> dbPost = postRepository.findById(FIRST_POST_ID);
+            assertTrue(dbPost.isPresent());
+            assertThat(dbPost.get())
+                    .usingRecursiveComparison()
+                    .isEqualTo(expected.toBuilder()
+                            .likes(expected.getLikes() + 1)
+                            .build()
+                    );
+        }
+
+        @Test
+        void shouldThrowIfIncrementLikesForNotPresentPost() {
+            assertThrows(
+                    EmptyResultDataAccessException.class,
+                    () -> postRepository.incrementLikes(FIRST_POST_ID + 3)
+            );
+        }
+    }
+
+    @Nested
+    @Sql(statements = {CLEAR, SET_POSTS_ID_SEQ}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    class PostDeleteTests {
+
+        @Test
+        void shouldDeletePresentPost() {
+            jdbcTemplate.update("""
+                    insert into posts(title, post_text, likes)
+                    values ('title', 'text', 2)
+                    """);
+
+            assertDoesNotThrow(() -> postRepository.deleteById(FIRST_POST_ID));
+
+            Optional<Post> dbPost = postRepository.findById(FIRST_POST_ID);
+            assertTrue(dbPost.isEmpty());
+        }
+
     }
 
     @Nested
@@ -256,20 +352,6 @@ public class PostRepositoryIntegrationTest extends PostgresBaseIntegrationTest {
             );
         }
 
-    }
-
-    @Configuration
-    static class MockDependenciesConfiguration {
-
-        @Bean
-        TagRepository tagRepository() {
-            return tagRepositoryMock;
-        }
-
-        @Bean
-        CommentaryRepository commentaryRepository() {
-            return commentaryRepositoryMock;
-        }
     }
 
 }
