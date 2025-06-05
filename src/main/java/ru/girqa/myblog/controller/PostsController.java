@@ -22,6 +22,8 @@ import ru.girqa.myblog.model.dto.post.UpdatePostDto;
 import ru.girqa.myblog.model.mapper.PostMapper;
 import ru.girqa.myblog.service.PostsService;
 
+import java.util.List;
+
 @Slf4j
 @Controller
 @RequestMapping("/posts")
@@ -31,6 +33,7 @@ public class PostsController {
     private final static int DEFAULT_PAGE = 1;
 
     private final static int DEFAULT_POSTS_PER_PAGE = 10;
+    public static final List<Integer> POST_PER_PAGE_OPTIONS = List.of(2, 5, 10);
 
     private final PostsService postsService;
 
@@ -38,13 +41,13 @@ public class PostsController {
 
     @GetMapping
     public String getAllPosts(Model model,
-                              @RequestParam(required = false, name = "page") Integer page,
-                              @RequestParam(required = false, name = "postsPerPage") Integer postsPerPage,
+                              @RequestParam(required = false, name = "page", defaultValue = "1") Integer page,
+                              @RequestParam(required = false, name = "postsPerPage", defaultValue = "10") Integer postsPerPage,
                               @RequestParam(required = false, name = "tag") String tag) {
         PostsPage postsPage = postsService.getPostsPage(PageRequest.builder()
                 .page(page == null ? DEFAULT_PAGE : page)
                 .posts(postsPerPage == null ? DEFAULT_POSTS_PER_PAGE : postsPerPage)
-                .targetTag(tag)
+                .targetTag(tag != null ? tag.trim() : null)
                 .build());
 
         model.addAttribute("newPost", new CreatePostDto());
@@ -52,7 +55,8 @@ public class PostsController {
                 .map(postMapper::toDto)
                 .toList());
         model.addAttribute("page", postsPage.getPage());
-        model.addAttribute("postsPerPage", postsPage.getPosts().size());
+        model.addAttribute("postsPerPage", postsPerPage);
+        model.addAttribute("availablePostsPerPage", POST_PER_PAGE_OPTIONS);
         model.addAttribute("totalPages", postsPage.getTotalPages());
         model.addAttribute("searchTag", postsPage.getTargetTag());
         return "all-posts";

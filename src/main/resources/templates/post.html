@@ -105,7 +105,7 @@
             ></p>
         </div>
 
-        <div class="tags-block">
+        <div class="tags-block" th:if="${!post.getTags().isEmpty()}">
             <span th:each="tag : ${post.getTags()}"
                   class="tag"
                   th:text="${tag}"></span>

@@ -52,6 +52,20 @@
             margin: 0;
         }
 
+        .tags-block {
+            margin: 1.5rem 0;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+
+            .tag {
+                background: #e9ecef;
+                padding: 0.25rem 0.75rem;
+                border-radius: 20px;
+                font-size: 0.875rem;
+            }
+        }
+
         .post_text {
             color: #495057;
             line-height: 1.6;
@@ -110,9 +124,39 @@
 
     <div class="control-plane">
         <div class="block">
-            <form class="d-flex gap-2">
-                <input class="search form-control" placeholder="Поиск постов...">
-                <button class="btn btn-outline-secondary">Найти</button>
+            <form class="d-flex gap-2"
+                  method="get"
+                  th:action="@{/posts}">
+                <input type="hidden" name="page" th:value="${page}">
+                <input type="hidden" name="postsPerPage" th:value="${postsPerPage}">
+                <input class="search form-control"
+                       placeholder="Поиск постов..."
+                       th:value="${(searchTag != null and !searchTag.isBlank()) ? searchTag : ''}"
+                       name="tag">
+                <button class="btn btn-outline-secondary" type="submit">Найти</button>
+            </form>
+        </div>
+        <div class="block">
+            <a th:href="@{/posts(page=${page - 1}, postsPerPage=${postsPerPage}, tag=${searchTag})}"
+               th:class="'btn btn-primary ' + (${page == 1 ? 'disabled' : ''})">
+                <span>←</span>
+            </a>
+            <div class="btn btn-primary" th:text="${page} + '/' + ${totalPages}"></div>
+            <a th:href="@{/posts(page=${page + 1}, postsPerPage=${postsPerPage}, tag=${searchTag})}"
+               th:class="'btn btn-primary ' + (${page < totalPages ? '' : 'disabled'})">
+                <span>→</span>
+            </a>
+        </div>
+        <div class="block">
+            <form method="get" th:action="@{/posts}">
+                <input type="hidden" name="page" th:value="${page}">
+                <input type="hidden" name="tag" th:value="${searchTag}">
+                <select class="form-select" name="postsPerPage" onchange="this.form.submit()">
+                    <option th:each="size: ${availablePostsPerPage}"
+                            th:value="${size}"
+                            th:text="${size}"
+                            th:selected="${size == postsPerPage}"></option>
+                </select>
             </form>
         </div>
         <div class="block">
@@ -135,6 +179,11 @@
                     <div class="post-likes" th:text="${post.likes()}"></div>
                     <div class="post-comments" th:text="${post.comments()}"></div>
                 </div>
+            </div>
+            <div class="tags-block" th:if="${!post.tags().isEmpty() and post.tags().getFirst() != null}">
+            <span th:each="tag : ${post.tags()}"
+                  class="tag"
+                  th:text="${tag}"></span>
             </div>
             <div class="post_image">
                 <img th:src="@{/posts/post/{id}/image(id=${post.id})}" alt="Изображение поста">

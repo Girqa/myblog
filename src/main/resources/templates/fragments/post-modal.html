@@ -63,7 +63,10 @@
                                    id="tagInput"
                                    placeholder="Введите тег и нажмите Enter">
                             <div id="tagsDisplay" class="mt-2 d-flex flex-wrap gap-2"></div>
-                            <input type="hidden" th:value="${postModel.tags}" id="hiddenTags" name="tags">
+                            <input type="hidden"
+                                   id="hiddenTags"
+                                   name="tags"
+                                   required>
                             <div class="invalid-feedback">
                                 Пожалуйста, добавьте хотя бы один тег
                             </div>
@@ -76,7 +79,8 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
                         <button type="submit" class="btn btn-primary">
-                            <span>Создать пост</span>
+                            <span th:with="titleIsPresent=${postModel.title == null or postModel.title.isEmpty()}"
+                                    th:text="${titleIsPresent ? 'Создать пость' : 'Редактировать пост'}"></span>
                         </button>
                     </div>
                 </form>

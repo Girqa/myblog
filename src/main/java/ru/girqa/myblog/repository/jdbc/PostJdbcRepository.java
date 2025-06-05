@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.girqa.myblog.model.domain.PageRequest;
+import ru.girqa.myblog.model.domain.Tag;
 import ru.girqa.myblog.model.domain.post.Post;
 import ru.girqa.myblog.model.domain.post.PostPreview;
 import ru.girqa.myblog.model.domain.post.PostsPage;
@@ -13,6 +14,7 @@ import ru.girqa.myblog.repository.PostRepository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -82,9 +84,9 @@ public class PostJdbcRepository implements PostRepository {
     public PostsPage findAllPaged(@NonNull PageRequest page) {
         Optional<Integer> totalPages;
         List<PostPreview> posts;
-        if (Objects.isNull(page.getTargetTag())) {
+        if (Objects.isNull(page.getTargetTag()) || page.getTargetTag().isBlank()) {
             totalPages = jdbcTemplate.query(
-                            "select count(*) / ? total_pages from posts",
+                            "select ceil(count(*) / ?::float) total_pages from posts",
                             (rs, rowNum) -> rs.getInt("total_pages"),
                             page.getPosts())
                     .stream().findFirst();
@@ -98,6 +100,17 @@ public class PostJdbcRepository implements PostRepository {
                     page.getPosts(), (page.getPage() - 1) * page.getPosts()
             );
         } else {
+            totalPages = jdbcTemplate.query(
+                            """
+                                    select ceil(count(*) / ?::float) total_pages from posts p
+                                    left join post_tags pt on pt.post_id = p.id
+                                    left join tags t on t.id = pt.tag_id
+                                    where t.tag_name = ?
+                                    """,
+                            (rs, rowNum) -> rs.getInt("total_pages"),
+                            page.getPosts(),
+                            page.getTargetTag())
+                    .stream().findFirst();
             posts = jdbcTemplate.query(
                     """
                             select p.id, p.title, p.likes, p.post_text from posts p
@@ -111,21 +124,10 @@ public class PostJdbcRepository implements PostRepository {
                     (rs, rowNum) -> extractPreview(rs),
                     page.getTargetTag(), page.getPosts(), (page.getPage() - 1) * page.getPosts()
             );
-            totalPages = jdbcTemplate.query(
-                            """
-                                    select count(*) / ? total_pages from posts p
-                                    left join post_tags pt on pt.post_id = p.id
-                                    left join tags t on t.id = pt.tag_id
-                                    where t.tag_name = ?
-                                    group by p.id
-                                    """,
-                            (rs, rowNum) -> rs.getInt("total_pages"),
-                            page.getPosts(),
-                            page.getTargetTag())
-                    .stream().findFirst();
         }
 
         fillCommentsCounts(posts);
+        fillTags(posts);
 
         return PostsPage.builder()
                 .page(page.getPage())
@@ -189,6 +191,44 @@ public class PostJdbcRepository implements PostRepository {
         for (PostPreview post : posts) {
             Long postComments = comments.getOrDefault(post.getId(), 0L);
             post.setComments(postComments);
+        }
+    }
+
+    private void fillTags(List<PostPreview> posts) {
+        if (posts.isEmpty()) return;
+
+        record PostTag(Long postId, Tag tag) {
+        }
+
+        String inSql = String.join(", ", Collections.nCopies(posts.size(), "?"));
+        String query = """
+                select p.id post_id, t.tag_name tag_name, t.id tag_id from posts p
+                left join post_tags pt on pt.post_id = p.id
+                left join tags t on t.id = pt.tag_id
+                where p.id in (%s)
+                """.formatted(inSql);
+        Map<Long, List<Tag>> tags = jdbcTemplate.query(
+                        query,
+                        (rs, rowNum) -> new PostTag(
+                                rs.getLong("post_id"),
+                                Tag.builder()
+                                        .id(rs.getLong("tag_id"))
+                                        .name(rs.getString("tag_name"))
+                                        .build()
+                        ),
+                        posts.stream()
+                                .map(PostPreview::getId)
+                                .toArray()
+                ).stream()
+                .collect(Collectors.groupingBy(
+                        PostTag::postId,
+                        Collectors.mapping(PostTag::tag, Collectors.toList())
+                ));
+
+
+        for (PostPreview post : posts) {
+            List<Tag> postTags = tags.getOrDefault(post.getId(), new ArrayList<>());
+            post.setTags(postTags);
         }
     }
 
