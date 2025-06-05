@@ -5,11 +5,23 @@ create table posts
 (
     id        bigint  not null generated always as identity,
     title     text    not null,
-    image     bytea   not null,
     post_text text    not null,
     likes     integer not null default 0 check ( likes >= 0 ),
 
     constraint post_pk primary key (id)
+);
+
+create table images
+(
+    post_id    bigint      not null,
+    image_name varchar(50) not null,
+    image_size bigint      not null,
+    image_data bytea       not null,
+
+    constraint image_pk primary key (post_id),
+
+    constraint images_posts_fk foreign key (post_id)
+        references posts (id) on delete cascade
 );
 
 create table tags

@@ -17,9 +17,6 @@ import ru.girqa.myblog.model.domain.post.PostsPage;
 import ru.girqa.myblog.repository.common.PostgresBaseIntegrationTest;
 import ru.girqa.myblog.repository.jdbc.PostJdbcRepository;
 
-import javax.sql.rowset.serial.SerialBlob;
-
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -60,7 +57,6 @@ public class PostRepositoryIntegrationTest extends PostgresBaseIntegrationTest {
         void shouldSavePost() {
             Post post = Post.builder()
                     .title("Post")
-                    .image(new SerialBlob("Hello!".getBytes(StandardCharsets.UTF_8)))
                     .likes(10)
                     .text("Text")
                     .build();
@@ -84,8 +80,8 @@ public class PostRepositoryIntegrationTest extends PostgresBaseIntegrationTest {
         @BeforeEach
         void setUpPosts() {
             jdbcTemplate.update("""
-                    insert into posts(title, image, post_text)
-                    values ('post1', 'ABCDE'::bytea, 't1'), ('post2', 'ABCDE'::bytea, 't2')
+                    insert into posts(title, post_text)
+                    values ('post1', 't1'), ('post2', 't2')
                     """);
         }
 
@@ -100,8 +96,7 @@ public class PostRepositoryIntegrationTest extends PostgresBaseIntegrationTest {
                     () -> assertEquals(FIRST_POST_ID, dbPost.getId()),
                     () -> assertEquals("post1", dbPost.getTitle()),
                     () -> assertEquals("t1", dbPost.getText()),
-                    () -> assertEquals(0, dbPost.getLikes()),
-                    () -> assertEquals(new SerialBlob("ABCDE".getBytes(StandardCharsets.UTF_8)), dbPost.getImage())
+                    () -> assertEquals(0, dbPost.getLikes())
             );
         }
 
@@ -122,22 +117,20 @@ public class PostRepositoryIntegrationTest extends PostgresBaseIntegrationTest {
         @SneakyThrows
         void setUpPosts() {
             jdbcTemplate.update("""
-                    insert into posts(title, image, post_text, likes)
-                    values ('post1', 'ABCDE'::bytea, 't1', 5), ('post2', 'ABCDE'::bytea, 't2', 4)
+                    insert into posts(title, post_text, likes)
+                    values ('post1', 't1', 5), ('post2', 't2', 4)
                     """);
 
             posts = List.of(
                     Post.builder()
                             .id(FIRST_POST_ID)
                             .title("post1")
-                            .image(new SerialBlob("ABCDE".getBytes(StandardCharsets.UTF_8)))
                             .text("t1")
                             .likes(5)
                             .build(),
                     Post.builder()
                             .id(FIRST_POST_ID + 1)
                             .title("post2")
-                            .image(new SerialBlob("ABCDE".getBytes(StandardCharsets.UTF_8)))
                             .text("t2")
                             .likes(4)
                             .build()
@@ -259,8 +252,7 @@ public class PostRepositoryIntegrationTest extends PostgresBaseIntegrationTest {
                     () -> assertEquals(post.getId(), preview.getId()),
                     () -> assertEquals(post.getTitle(), preview.getTitle()),
                     () -> assertEquals(post.getText(), preview.getText()),
-                    () -> assertEquals(post.getLikes(), preview.getLikes()),
-                    () -> assertEquals(post.getImage(), preview.getImage())
+                    () -> assertEquals(post.getLikes(), preview.getLikes())
             );
         }
 

@@ -35,8 +35,8 @@ class TagRepositoryIntegrationTest extends PostgresBaseIntegrationTest {
 
     static final String CREATE_POST = """
             select setval('posts_id_seq', 11, false);
-            insert into posts(title, image, post_text, likes)
-            values ('Post', 'AAAAAAAA'::bytea, 'Lmao', 5);
+            insert into posts(title, post_text, likes)
+            values ('Post', 'Lmao', 5);
             """;
 
     @Nested

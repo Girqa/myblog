@@ -63,10 +63,11 @@ public class CommentaryJdbcRepository implements CommentaryRepository {
     }
 
     @Override
-    public List<Commentary> findByPostId(@NonNull Long postId) {
+    public List<Commentary> findByPostIdOrderById(@NonNull Long postId) {
         return jdbcTemplate.query("""
                         select id, post_id, commentary_text from commentaries
                         where post_id = ?
+                        order by id
                         """,
                 (rs, rowNum) -> extractCommentary(rs),
                 postId

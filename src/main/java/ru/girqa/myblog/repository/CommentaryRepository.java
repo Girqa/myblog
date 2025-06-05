@@ -16,7 +16,7 @@ public interface CommentaryRepository {
 
     void delete(@NonNull Long id);
 
-    List<Commentary> findByPostId(@NonNull Long postId);
+    List<Commentary> findByPostIdOrderById(@NonNull Long postId);
 
     Long countByPostId(@NonNull Long postId);
 }

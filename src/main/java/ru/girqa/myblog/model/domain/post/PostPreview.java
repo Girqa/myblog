@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.Setter;
 import ru.girqa.myblog.model.domain.Tag;
 
-import java.sql.Blob;
 import java.util.List;
 
 @Getter
@@ -18,7 +17,6 @@ import java.util.List;
 public class PostPreview {
     private Long id;
     private String title;
-    private Blob image;
     private Integer likes;
     private String text;
     private Long comments;
