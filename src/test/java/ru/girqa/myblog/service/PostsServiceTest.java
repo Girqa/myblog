@@ -11,6 +11,7 @@ import ru.girqa.myblog.exception.PostNotFoundException;
 import ru.girqa.myblog.model.domain.Commentary;
 import ru.girqa.myblog.model.domain.PageRequest;
 import ru.girqa.myblog.model.domain.Tag;
+import ru.girqa.myblog.model.domain.post.Image;
 import ru.girqa.myblog.model.domain.post.Post;
 import ru.girqa.myblog.model.domain.post.PostsPage;
 import ru.girqa.myblog.repository.CommentaryRepository;
@@ -18,6 +19,7 @@ import ru.girqa.myblog.repository.ImageRepository;
 import ru.girqa.myblog.repository.PostRepository;
 import ru.girqa.myblog.repository.TagRepository;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,8 +54,15 @@ class PostsServiceTest {
     @Test
     @SneakyThrows
     void shouldCreatePost() {
+        final Long POST_ID = 5L;
+        final Image image = Image.builder()
+                .size(10)
+                .data(new byte[10])
+                .build();
+
         Post post = Post.builder()
                 .title("Title")
+                .image(image)
                 .text("Text")
                 .tags(List.of(
                         Tag.builder()
@@ -67,7 +76,7 @@ class PostsServiceTest {
 
         when(postRepositoryMock.save(any()))
                 .thenReturn(post.toBuilder()
-                        .id(5L)
+                        .id(POST_ID)
                         .build()
                 );
 
@@ -85,10 +94,16 @@ class PostsServiceTest {
         when(tagRepositoryMock.merge(anyList()))
                 .thenReturn(mergedTags);
 
-        Post saved = postsService.create(post);  // TODO: add check for image
+        Post saved = postsService.create(post);
 
         verify(postRepositoryMock, times(1))
                 .save(post);
+
+        verify(imageRepositoryMock, times(1))
+                .save(image.toBuilder()
+                        .postId(POST_ID)
+                        .build()
+                );
 
         verify(tagRepositoryMock, times(1))
                 .merge(post.getTags());
@@ -97,13 +112,72 @@ class PostsServiceTest {
                 .bindTagsToPost(saved.getId(), mergedTags);
 
         assertAll(
-                () -> assertEquals(5L, saved.getId()),
+                () -> assertEquals(POST_ID, saved.getId()),
                 () -> assertEquals(post.getTitle(), saved.getTitle()),
                 () -> assertEquals(post.getText(), saved.getText()),
                 () -> assertEquals(2, saved.getTags().size())
         );
 
         assertEquals(mergedTags, saved.getTags());
+    }
+
+    @Test
+    void shouldUpdatePost() {
+        Post post = Post.builder()
+                .id(11L)
+                .title("Title")
+                .text("text")
+                .image(Image.builder()
+                        .data("IMAGE".getBytes(StandardCharsets.UTF_8))
+                        .build())
+                .tags(List.of(
+                        Tag.builder()
+                                .name("t1")
+                                .build(),
+                        Tag.builder()
+                                .name("t2")
+                                .build()
+                ))
+                .build();
+
+        List<Tag> mergedTags = post.getTags().stream()
+                .map(t -> t.toBuilder()
+                        .id(1L)
+                        .build()
+                ).toList();
+
+        when(tagRepositoryMock.merge(anyList()))
+                .thenReturn(mergedTags);
+
+        when(postRepositoryMock.findById(post.getId()))
+                .thenReturn(Optional.of(post));
+
+        postsService.update(post);
+
+        verify(postRepositoryMock, times(1))
+                .update(post);
+
+        verify(tagRepositoryMock, times(1))
+                .unboundTagsFromPost(post.getId());
+
+        verify(tagRepositoryMock, times(1))
+                .merge(post.getTags());
+
+        verify(tagRepositoryMock, times(1))
+                .bindTagsToPost(post.getId(), mergedTags);
+    }
+
+    @Test
+    void shouldNotUpdateNotPresentPost() {
+        when(postRepositoryMock.findById(22L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                PostNotFoundException.class,
+                () -> postsService.update(Post.builder()
+                        .id(22L)
+                        .build())
+        );
     }
 
     @Test
@@ -191,5 +265,44 @@ class PostsServiceTest {
         );
 
         assertEquals(page, dbPage);
+    }
+
+    @Test
+    void shouldFindImageByPostId() {
+        when(imageRepositoryMock.findByPostId(5L))
+                .thenReturn(Optional.of(Image.builder()
+                        .data("DATA".getBytes(StandardCharsets.UTF_8))
+                        .build())
+                );
+
+        byte[] data = assertDoesNotThrow(() -> postsService.getImage(5L));
+        assertArrayEquals("DATA".getBytes(StandardCharsets.UTF_8), data);
+    }
+
+    @Test
+    void shouldNotFindImage() {
+        when(imageRepositoryMock.findByPostId(anyLong()))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                PostNotFoundException.class,
+                () -> postsService.getImage(2L)
+        );
+    }
+
+    @Test
+    void shouldIncrementLikes() {
+        postsService.incrementLikes(98L);
+
+        verify(postRepositoryMock, times(1))
+                .incrementLikes(98L);
+    }
+
+    @Test
+    void shouldDeletePost() {
+        postsService.delete(76L);
+
+        verify(postRepositoryMock, times(1))
+                .deleteById(76L);
     }
 }

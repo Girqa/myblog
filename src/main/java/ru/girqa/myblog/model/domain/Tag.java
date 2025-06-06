@@ -8,7 +8,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Builder
+@Builder(toBuilder = true)
 @AllArgsConstructor
 @EqualsAndHashCode
 public class Tag {

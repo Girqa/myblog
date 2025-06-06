@@ -9,6 +9,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ru.girqa.myblog.model.domain.Commentary;
 import ru.girqa.myblog.repository.CommentaryRepository;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -54,19 +56,35 @@ class CommentaryServiceTest {
 
     @Test
     void shouldUpdateCommentary() {
-        Commentary commentary = Commentary.builder()
+        Commentary dbComment = Commentary.builder()
+                .id(3L)
                 .postId(2L)
                 .text("Comment")
                 .build();
+
+        Commentary updatedComment = dbComment.toBuilder()
+                .text("New comment text")
+                .build();
+
+        when(repositoryMock.findById(dbComment.getId()))
+                .thenReturn(Optional.of(dbComment));
 
         doNothing()
                 .when(repositoryMock)
                 .update(any());
 
-        commentaryService.update(commentary);
+        commentaryService.update(dbComment.getId(), updatedComment.getText());
 
         verify(repositoryMock, times(1))
-                .update(commentary);
+                .update(updatedComment);
+    }
+
+    @Test
+    void shouldDeleteCommentary() {
+        commentaryService.delete(53L);
+
+        verify(repositoryMock, times(1))
+                .delete(53L);
     }
 
 }

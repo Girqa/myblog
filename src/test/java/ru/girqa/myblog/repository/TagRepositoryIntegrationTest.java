@@ -206,5 +206,22 @@ class TagRepositoryIntegrationTest extends PostgresBaseIntegrationTest {
             assertEquals(FIRST_TAG_ID + 1, links.getLast().tagId);
         }
 
+        @Test
+        void shouldUnboundTagsFromPresentPost() {
+            jdbcTemplate.update("insert into tags(tag_name) values ('Present Tag 1')");
+            jdbcTemplate.update("insert into tags(tag_name) values ('Present Tag 2')");
+
+            assertDoesNotThrow(
+                    () -> tagRepository.unboundTagsFromPost(POST_ID)
+            );
+
+            List<Long> tagsOfPost = jdbcTemplate.query(
+                    "select post_id, tag_id from post_tags",
+                    (rs, n) -> rs.getLong("tag_id")
+            );
+
+            assertTrue(tagsOfPost.isEmpty());
+        }
+
     }
 }
