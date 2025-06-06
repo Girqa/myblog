@@ -79,4 +79,12 @@ class CommentaryServiceTest {
                 .update(updatedComment);
     }
 
+    @Test
+    void shouldDeleteCommentary() {
+        commentaryService.delete(53L);
+
+        verify(repositoryMock, times(1))
+                .delete(53L);
+    }
+
 }
