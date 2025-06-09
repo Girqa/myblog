@@ -5,12 +5,14 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.ToString;
 import org.springframework.lang.Nullable;
 
 @Getter
 @Builder
 @AllArgsConstructor
 @EqualsAndHashCode
+@ToString
 public class PageRequest {
     @NonNull
     private final Integer page;

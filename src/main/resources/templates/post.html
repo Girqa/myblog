@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8"/>
     <title th:text="${post.getTitle()}"></title>
-    <link th:href="@{/webjars/bootstrap/5.3.0/dist/css/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/webjars/bootstrap/5.3.0/dist/css/bootstrap.min.css}" rel="stylesheet"/>
     <style>
         .btn-outline-secondary {
             border-color: #6c757d;
@@ -87,7 +87,7 @@
             >Редактировать
             </button>
             <form th:action="@{/posts/post/{id}(id=${post.id})}" method="post">
-                <input type="hidden" name="_method" value="delete">
+                <input type="hidden" name="_method" value="delete"/>
                 <button type="submit" class="btn btn-danger">Удалить</button>
             </form>
         </div>
@@ -95,7 +95,7 @@
 
     <div class="post-content">
         <div class="post-image mb-4">
-            <img th:src="@{/posts/post/{id}/image(id=${post.id})}" class="img-fluid rounded" alt="Изображение поста">
+            <img th:src="@{/posts/post/{id}/image(id=${post.id})}" class="img-fluid rounded" alt="Изображение поста"/>
         </div>
 
         <div class="post-text mb-4">
@@ -122,9 +122,9 @@
         <h3>Комментарии</h3>
         <form th:action="@{/commentaries/commentary}" th:object="${createCommentary}" method="post">
             <div class="mb-3">
-                <input type="hidden" th:value="${post.getId()}" name="postId">
+                <input type="hidden" th:value="${post.getId()}" name="postId"/>
                 <textarea class="form-control"
-                          name="text" rows="3" required
+                          name="text" rows="3" required="required"
                           th:field="*{text}"></textarea>
             </div>
             <button type="submit" class="btn btn-primary">Добавить комментарий</button>
@@ -146,11 +146,11 @@
                 <div class="comment-edit mb-5" style="display: none">
                     <form th:action="@{/commentaries/commentary/{id}(id=${comment.id()})}" method="post"
                           class="comment-edit-form">
-                        <input type="hidden" name="_method" value="put">
-                        <input type="hidden" th:value="${post.getId()}" name="postId">
-                        <input type="hidden" th:value="${comment.id()}" name="commentaryId">
+                        <input type="hidden" name="_method" value="put"/>
+                        <input type="hidden" th:value="${post.getId()}" name="postId"/>
+                        <input type="hidden" th:value="${comment.id()}" name="commentaryId"/>
                         <textarea class="form-control text-area"
-                                  name="text" rows="3" required
+                                  name="text" rows="3" required="required"
                                   th:text="${comment.text()}"></textarea>
                     </form>
                     <button class="btn btn-primary" th:data-id="${comment.id()}"
@@ -160,9 +160,9 @@
                 </div>
                 <div class="comment-actions">
                     <form th:action="@{/commentaries/commentary/{id}(id=${comment.id})}" method="post">
-                        <input type="hidden" name="_method" value="delete">
-                        <input type="hidden" th:value="${post.getId()}" name="postId">
-                        <input type="hidden" th:value="${comment.id()}" name="commentaryId">
+                        <input type="hidden" name="_method" value="delete"/>
+                        <input type="hidden" th:value="${post.getId()}" name="postId"/>
+                        <input type="hidden" th:value="${comment.id()}" name="commentaryId"/>
                         <button type="submit" class="post-delete-btn btn btn-sm btn-outline-danger"></button>
                     </form>
                 </div>
@@ -174,9 +174,11 @@
                 .forEach(form => {
                     form.querySelector('.text-area')
                         .addEventListener('keypress', function (e) {
-                            if ((e.ctrlKey || e.metaKey) && e.code === 'Enter') {
-                                e.preventDefault();
-                                form.submit();
+                            if (e.ctrlKey || e.metaKey) {
+                                if (e.code === 'Enter') {
+                                    e.preventDefault();
+                                    form.submit();
+                                }
                             }
                         })
                 })

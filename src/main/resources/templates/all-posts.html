@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8"/>
     <title>Просмотр постов</title>
-    <link th:href="@{/webjars/bootstrap/5.3.0/dist/css/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/webjars/bootstrap/5.3.0/dist/css/bootstrap.min.css}" rel="stylesheet"/>
     <style>
         .wrapper {
             max-width: 1200px;
@@ -127,12 +127,12 @@
             <form class="d-flex gap-2"
                   method="get"
                   th:action="@{/posts}">
-                <input type="hidden" name="page" th:value="${page}">
-                <input type="hidden" name="postsPerPage" th:value="${postsPerPage}">
+                <input type="hidden" name="page" th:value="${page}"/>
+                <input type="hidden" name="postsPerPage" th:value="${postsPerPage}"/>
                 <input class="search form-control"
                        placeholder="Поиск постов..."
                        th:value="${(searchTag != null and !searchTag.isBlank()) ? searchTag : ''}"
-                       name="tag">
+                       name="tag"/>
                 <button class="btn btn-outline-secondary" type="submit">Найти</button>
             </form>
         </div>
@@ -149,8 +149,8 @@
         </div>
         <div class="block">
             <form method="get" th:action="@{/posts}">
-                <input type="hidden" name="page" th:value="${page}">
-                <input type="hidden" name="tag" th:value="${searchTag}">
+                <input type="hidden" name="page" th:value="${page}"/>
+                <input type="hidden" name="tag" th:value="${searchTag}"/>
                 <select class="form-select" name="postsPerPage" onchange="this.form.submit()">
                     <option th:each="size: ${availablePostsPerPage}"
                             th:value="${size}"
@@ -186,7 +186,7 @@
                   th:text="${tag}"></span>
             </div>
             <div class="post_image">
-                <img th:src="@{/posts/post/{id}/image(id=${post.id})}" alt="Изображение поста">
+                <img th:src="@{/posts/post/{id}/image(id=${post.id})}" alt="Изображение поста"/>
             </div>
             <p class="post_text" th:text="${post.text()}"></p>
         </article>
