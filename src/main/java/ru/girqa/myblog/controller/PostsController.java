@@ -30,16 +30,17 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostsController {
 
-    private final static int DEFAULT_PAGE = 1;
+    public final static int DEFAULT_PAGE = 1;
 
-    private final static int DEFAULT_POSTS_PER_PAGE = 10;
-    public static final List<Integer> POST_PER_PAGE_OPTIONS = List.of(2, 5, 10);
+    public final static int DEFAULT_POSTS_PER_PAGE = 10;
+
+    public final static List<Integer> POST_PER_PAGE_OPTIONS = List.of(10, 20, 50);
 
     private final PostsService postsService;
 
     private final PostMapper postMapper;
 
-    @GetMapping
+    @GetMapping(produces = MediaType.TEXT_HTML_VALUE)
     public String getAllPosts(Model model,
                               @RequestParam(required = false, name = "page", defaultValue = "1") Integer page,
                               @RequestParam(required = false, name = "postsPerPage", defaultValue = "10") Integer postsPerPage,
@@ -58,11 +59,11 @@ public class PostsController {
         model.addAttribute("postsPerPage", postsPerPage);
         model.addAttribute("availablePostsPerPage", POST_PER_PAGE_OPTIONS);
         model.addAttribute("totalPages", postsPage.getTotalPages());
-        model.addAttribute("searchTag", postsPage.getTargetTag());
+        model.addAttribute("searchTag", postsPage.getTargetTag() == null ? "" : postsPage.getTargetTag());
         return "all-posts";
     }
 
-    @GetMapping("/post/{id}")
+    @GetMapping(path = "/post/{id}", produces = MediaType.TEXT_HTML_VALUE)
     public String getPost(@PathVariable("id") Long id,
                           Model model) {
         Post post = postsService.findPost(id);
@@ -98,7 +99,7 @@ public class PostsController {
         return ResponseEntity.ok(postsService.getImage(id));
     }
 
-    @PostMapping("/post/{id}/like")
+    @PostMapping(path = "/post/{id}/like", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> incrementLikes(@PathVariable("id") Long id) {
         return ResponseEntity
                 .ok(postsService.incrementLikes(id).toString());
