@@ -21,7 +21,7 @@ public class WebConfiguration implements WebMvcConfigurer {
         resolver.setApplicationContext(applicationContext);
         resolver.setPrefix("classpath:/templates/");
         resolver.setSuffix(".html");
-        resolver.setTemplateMode("HTML5");
+        resolver.setTemplateMode("HTML");
         resolver.setCharacterEncoding("UTF-8");
         return resolver;
     }

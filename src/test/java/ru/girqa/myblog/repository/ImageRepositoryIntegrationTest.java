@@ -3,11 +3,12 @@ package ru.girqa.myblog.repository;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import ru.girqa.myblog.model.domain.post.Image;
-import ru.girqa.myblog.repository.common.PostgresBaseIntegrationTest;
+import ru.girqa.myblog.repository.common.PostgresTestConfiguration;
 import ru.girqa.myblog.repository.jdbc.ImageJdbcRepository;
 
 import java.nio.charset.StandardCharsets;
@@ -16,8 +17,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-@ContextConfiguration(classes = {ImageJdbcRepository.class})
-class ImageRepositoryIntegrationTest extends PostgresBaseIntegrationTest {
+@Import(PostgresTestConfiguration.class)
+@SpringBootTest(classes = ImageJdbcRepository.class)
+class ImageRepositoryIntegrationTest {
 
     @Autowired
     ImageRepository imageRepository;
