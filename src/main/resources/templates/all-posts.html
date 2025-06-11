@@ -193,7 +193,7 @@
     </div>
 </div>
 
-<div th:replace="fragments/post-modal :: postModal(form_title='Создание поста', uri=@{/posts/post}, postModel=${newPost})"></div>
+<div th:replace="~{fragments/post-modal :: postModal(form_title='Создание поста', uri=@{/posts/post}, postModel=${newPost})}"></div>
 
 <script th:src="@{/webjars/bootstrap/5.3.0/dist/js/bootstrap.bundle.min.js}"></script>
 </body>
