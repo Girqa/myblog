@@ -4,12 +4,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlGroup;
 import ru.girqa.myblog.model.domain.Commentary;
-import ru.girqa.myblog.repository.common.PostgresBaseIntegrationTest;
+import ru.girqa.myblog.repository.common.PostgresTestConfiguration;
 import ru.girqa.myblog.repository.jdbc.CommentaryJdbcRepository;
 
 import java.util.ArrayList;
@@ -19,8 +20,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-@ContextConfiguration(classes = {CommentaryJdbcRepository.class})
-class CommentaryRepositoryIntegrationTest extends PostgresBaseIntegrationTest {
+@Import(PostgresTestConfiguration.class)
+@SpringBootTest(classes = CommentaryJdbcRepository.class)
+class CommentaryRepositoryIntegrationTest {
 
     @Autowired
     CommentaryRepository repository;
@@ -66,7 +68,7 @@ class CommentaryRepositoryIntegrationTest extends PostgresBaseIntegrationTest {
 
         @Test
         void shouldFindAllByOneCommentariesInDb() {
-            for (Commentary commentary: COMMENTARIES) {
+            for (Commentary commentary : COMMENTARIES) {
                 Optional<Commentary> dbCommentary = repository.findById(commentary.getId());
                 assertTrue(dbCommentary.isPresent());
                 assertThat(dbCommentary.get())

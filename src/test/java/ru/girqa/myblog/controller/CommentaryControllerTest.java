@@ -4,6 +4,9 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.util.MultiValueMap;
 import org.testcontainers.shaded.com.google.common.net.MediaType;
 import ru.girqa.myblog.model.domain.Commentary;
@@ -18,13 +21,17 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-class CommentaryControllerTest extends BaseControllerTest {
+@WebMvcTest(CommentaryController.class)
+class CommentaryControllerTest {
 
-    @Autowired
+    @MockitoBean
     CommentaryService commentaryServiceMock;
 
-    @Autowired
+    @MockitoBean
     CommentaryMapper commentaryMapperMock;
+
+    @Autowired
+    MockMvc mockMvc;
 
     @BeforeEach
     void setUpMocks() {

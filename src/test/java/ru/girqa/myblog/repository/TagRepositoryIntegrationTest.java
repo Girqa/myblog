@@ -4,20 +4,22 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import ru.girqa.myblog.model.domain.Tag;
-import ru.girqa.myblog.repository.common.PostgresBaseIntegrationTest;
+import ru.girqa.myblog.repository.common.PostgresTestConfiguration;
 import ru.girqa.myblog.repository.jdbc.TagJdbcRepository;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@ContextConfiguration(classes = {TagJdbcRepository.class})
-class TagRepositoryIntegrationTest extends PostgresBaseIntegrationTest {
+@Import(PostgresTestConfiguration.class)
+@SpringBootTest(classes = TagJdbcRepository.class)
+class TagRepositoryIntegrationTest {
 
     @Autowired
     TagRepository tagRepository;

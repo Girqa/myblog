@@ -1,18 +1,13 @@
 package ru.girqa.myblog;
 
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import ru.girqa.myblog.config.YamlPropertySourceFactory;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@EnableWebMvc
-@Configuration
-@ComponentScan(basePackages = "ru.girqa.myblog")
-@PropertySource(
-        value = "classpath:application.yml",
-        factory = YamlPropertySourceFactory.class
-)
+@SpringBootApplication
 public class MyBlogConfig {
+
+    public static void main(String[] args) {
+        SpringApplication.run(MyBlogConfig.class, args);
+    }
 }
 
