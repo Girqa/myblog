@@ -1,7 +1,7 @@
-FROM tomcat:10-jre21 as servlet-container
-ENV TOMCAT_HOME=/usr/local/tomcat
+FROM eclipse-temurin:21-jre-alpine
 
-COPY target/myblog.war $TOMCAT_HOME/webapps/myblog.war
+WORKDIR /opt/app/
+COPY build/libs/myblog.jar /opt/app/myblog.jar
 
 EXPOSE 8080 8000
-ENTRYPOINT ["catalina.sh", "run", "--", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000"]
+ENTRYPOINT ["java", "-jar", "myblog.jar", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000"]
